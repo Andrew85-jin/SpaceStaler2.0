@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty  } from 'class-validator';
+import {IsString, IsOptional, IsNumberString, IsNotEmpty,} from 'class-validator';
 
 export class AdminDto {
     @IsString()
@@ -7,13 +7,17 @@ export class AdminDto {
 
     @IsString()
     @IsNotEmpty()
-    paramiters: string;
+    object_name: string;
 
-    @IsString()
-    @IsNotEmpty()
-    glb_upload: string;
+    @IsOptional()
+    @IsNumberString()
+    width?: string;
 
-    @IsString()
-    @IsNotEmpty()
-    preview: string;
+    @IsOptional()
+    @IsNumberString()
+    height?: string;
+
+    @IsOptional()
+    @IsNumberString()
+    length?: string;
 }
