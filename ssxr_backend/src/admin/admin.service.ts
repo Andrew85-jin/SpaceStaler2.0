@@ -1,26 +1,40 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Admin } from "./admin.entity";
-import {Repository} from "typeorm";
-import {AdminDto} from "./adminDTO";
+import { Repository } from 'typeorm';
+
+import { Admin } from './admin.entity';
+import { AdminDto } from './adminDTO';
 
 @Injectable()
 export class AdminService {
     constructor(
         @InjectRepository(Admin)
-        private adminRepository: Repository<Admin>
+        private readonly adminRepository: Repository<Admin>,
     ) {}
 
-    getAllData(){
-        return this.adminRepository.find()
-    }
+    async create(
+        body: AdminDto,
+        files: {
+            model?: Express.Multer.File[];
+            images?: Express.Multer.File[];
+        },
+    ): Promise<Admin> {
+        const glbFile = files.model?.[0];
+        const images = files.images || [];
+        if (!glbFile) {
+            throw new Error('GLB файл обязателен');
+        }
 
-    async setAllData(body: AdminDto): Promise<Admin> {
-        const admin = this.adminRepository.create(body)
+        const admin = this.adminRepository.create({
+            name: body.name,
+            object_name: body.object_name,
+            width: body.width ? Number(body.width) : 0,
+            height: body.height ? Number(body.height) : 0,
+            length: body.length ? Number(body.length) : 0,
+            glb_path: glbFile.path,
+            images: images.map((img) => img.path),
+        });
+
         return this.adminRepository.save(admin);
-    }
-
-    async resetAdminTable(): Promise<void> {
-        await this.adminRepository.query('TRUNCATE TABLE admin RESTART IDENTITY CASCADE;');
     }
 }
