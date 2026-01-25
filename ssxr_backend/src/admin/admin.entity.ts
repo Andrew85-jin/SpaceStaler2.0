@@ -8,7 +8,7 @@ export class Admin {
     @Column()
     name: string;
     @Column()
-    paramiters: string;
+    object_name: string;
     @Column()
     glb_upload: string;
     @Column()
