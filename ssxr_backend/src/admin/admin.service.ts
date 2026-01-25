@@ -28,9 +28,9 @@ export class AdminService {
         const admin = this.adminRepository.create({
             name: body.name,
             object_name: body.object_name,
-            width: body.width ? Number(body.width) : 0,
-            height: body.height ? Number(body.height) : 0,
-            length: body.length ? Number(body.length) : 0,
+            width: body.width ? Number(body.width) : null,
+            height: body.height ? Number(body.height) : null,
+            length: body.length ? Number(body.length) : null,
             glb_path: glbFile.path,
             images: images.map((img) => img.path),
         });

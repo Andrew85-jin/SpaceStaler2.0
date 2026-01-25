@@ -37,6 +37,7 @@ export class AdminController {
             images?: Express.Multer.File[];
         },
     ) {
+        console.log('FILES IN CONTROLLER:', files);
         return this.adminService.create(body, files);
     }
 }

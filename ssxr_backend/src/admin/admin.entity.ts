@@ -11,14 +11,14 @@ export class Admin {
     @Column()
     object_name: string;
 
-    @Column({nullable: true})
-    width: number;
+    @Column({type:"float", nullable: true})
+    width: number | null;
 
-    @Column({nullable: true})
-    height: number;
+    @Column({type:"float", nullable: true})
+    height: number | null;
 
-    @Column({nullable: true})
-    length: number;
+    @Column({type:"float", nullable: true})
+    length: number | null;
 
     @Column()
     glb_path: string;

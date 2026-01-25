@@ -31,7 +31,7 @@ export default function UploadForm() {
       formData.append("images", img);
     }
 
-    await fetch("https://friend-api.com/upload", {
+    await fetch("http://localhost:3001/admin/upload", {
       method: "POST",
       body: formData,
     });

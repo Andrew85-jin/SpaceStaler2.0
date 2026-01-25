@@ -14,13 +14,13 @@ import { TypeOrmModule } from '@nestjs/typeorm';
         host: 'localhost',
         port: 5432,
         username: 'postgres',
-        password: 'postgres',
-        database: 'SpaceStaler',
+        password: '',
+        database: 'spacestyler',
         autoLoadEntities: true,
         synchronize: true,
       })
   ],
-  controllers: [AppController, AdminController],
-  providers: [AppService, AdminService],
+  controllers: [AppController],
+  providers: [AppService],
 })
 export class AppModule {}
