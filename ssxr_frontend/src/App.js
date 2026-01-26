@@ -1,3 +1,4 @@
+import './App.css';
 import { useState } from "react";
 
 export default function UploadForm() {
@@ -39,24 +40,32 @@ export default function UploadForm() {
   };
 
   return (
-      <form onSubmit={handleSubmit}>
-        <input name="name" placeholder="Your name" required />
-        <input name="object_name" placeholder="Object name" required />
+      <form className="upload-form" onSubmit={handleSubmit}>
+          <h2>Upload 3D Object</h2>
 
-        <input name="width" type="number" placeholder="Width" />
-        <input name="height" type="number" placeholder="Height" />
-        <input name="length" type="number" placeholder="Length" />
+          <input name="name" placeholder="Your name" required/>
+          <input name="object_name" placeholder="Object name" required/>
 
-        <input type="file" name="model" accept=".glb" onChange={handleModel} required />
-        <input type="file" name="images" accept="image/*" multiple onChange={handleImages} />
+          <div className="row">
+              <input name="width" type="number" placeholder="Width"/>
+              <input name="height" type="number" placeholder="Height"/>
+              <input name="length" type="number" placeholder="Length"/>
+          </div>
+          <p>Фото формату .glb</p>
+          <input type="file" name="model" accept=".glb" onChange={handleModel} required/>
+          <p>Фото на превʼю</p>
+          <input type="file" name="images" accept="image/*" multiple onChange={handleImages}/>
 
-        {preview && <p>GLB selected</p>}
+          {preview && <p className="preview-text">✔ GLB file selected</p>}
 
-        {imagesPreview.map((src, i) => (
-            <img key={i} src={src} width={100} />
-        ))}
+          <div className="image-preview">
+              {imagesPreview.map((src, i) => (
+                  <img key={i} src={src}/>
+              ))}
+          </div>
 
-        <button>Send</button>
+          <button>Send</button>
       </form>
+
   );
 }
