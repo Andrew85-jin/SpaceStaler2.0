@@ -43,7 +43,7 @@ export default function UploadForm() {
       <form className="upload-form" onSubmit={handleSubmit}>
           <h2>Upload 3D Object</h2>
 
-          <input name="name" placeholder="Your name" required/>
+          <input name="name" placeholder="Name" required/>
           <input name="object_name" placeholder="Object name" required/>
 
           <div className="row">
