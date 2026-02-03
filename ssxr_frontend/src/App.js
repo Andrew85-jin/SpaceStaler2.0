@@ -1,71 +1,164 @@
 import './App.css';
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function UploadForm() {
-  const [preview, setPreview] = useState(null);
-  const [imagesPreview, setImagesPreview] = useState([]);
+    const [preview, setPreview] = useState(null);
+    const [imagesPreview, setImagesPreview] = useState([]);
+    const [categories, setCategories] = useState([]);
+    const [selectedCategory, setSelectedCategory] = useState("");
+    const [objects, setObjects] = useState([]);
+    const [dropdownOpen, setDropdownOpen] = useState(false);
 
-  const handleModel = (e) => {
-    const file = e.target.files[0];
-    setPreview(URL.createObjectURL(file));
-  };
+    useEffect(() => {
+        const fetchCategories = async () => {
+            const data = [
+                "Диван", "Стілець", "Мікрохвильовка", "Телевізор", "Крісло",
+                "Ліжко", "Тумбочка", "Холодильник", "Стіл", "Лампа", "Килим",
+                "Шафа", "Письмовий стіл", "Полиця", "Тумба"
+            ];
+            setCategories(data);
+        };
+        fetchCategories();
+    }, []);
 
-  const handleImages = (e) => {
-    const files = Array.from(e.target.files);
-    setImagesPreview(files.map(f => URL.createObjectURL(f)));
-  };
+    const handleModel = (e) => {
+        const file = e.target.files[0];
+        setPreview(URL.createObjectURL(file));
+    };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+    const handleImages = (e) => {
+        const files = Array.from(e.target.files);
+        setImagesPreview(files.map(f => URL.createObjectURL(f)));
+    };
 
-    const formData = new FormData();
-    formData.append("name", e.target.name.value);
-    formData.append("object_name", e.target.object_name.value);
-    formData.append("width", e.target.width.value);
-    formData.append("height", e.target.height.value);
-    formData.append("length", e.target.length.value);
+    const handleSubmit = async (e) => {
+        e.preventDefault();
 
-    formData.append("model", e.target.model.files[0]);
+        if (!selectedCategory) return alert("Оберіть категорію");
 
-    for (let img of e.target.images.files) {
-      formData.append("images", img);
-    }
+        const formData = new FormData();
+        const objectData = {
+            name: e.target.name.value,
+            object_name: e.target.object_name.value,
+            width: e.target.width.value,
+            height: e.target.height.value,
+            length: e.target.length.value,
+            category: selectedCategory,
+            modelPreview: preview,
+            imagesPreview: imagesPreview
+        };
 
-    await fetch("https://friend-api.com/upload", {
-      method: "POST",
-      body: formData,
-    });
+        formData.append("name", objectData.name);
+        formData.append("object_name", objectData.object_name);
+        formData.append("width", objectData.width);
+        formData.append("height", objectData.height);
+        formData.append("length", objectData.length);
+        formData.append("category", objectData.category);
+        formData.append("model", e.target.model.files[0]);
+        for (let img of e.target.images.files) {
+            formData.append("images", img);
+        }
 
-    alert("Sent!");
-  };
+        const response = await fetch("https://friend-api.com/upload", {
+            method: "POST",
+            body: formData,
+        });
 
-  return (
-      <form className="upload-form" onSubmit={handleSubmit}>
-          <h2>Upload 3D Object</h2>
+        if (response.ok) {
+            alert("Відправлено!");
+            setObjects(prev => [...prev, objectData]);
+            e.target.reset();
+            setPreview(null);
+            setImagesPreview([]);
+            setSelectedCategory("");
+            setDropdownOpen(false);
+        } else {
+            alert("Помилка при відправці");
+        }
+    };
 
-          <input name="name" placeholder="Name" required/>
-          <input name="object_name" placeholder="Object name" required/>
+    return (
+        <div>
+            <form className="upload-form" onSubmit={handleSubmit}>
+                <h2>Завантажити 3D Об'єкт</h2>
 
-          <div className="row">
-              <input name="width" type="number" placeholder="Width"/>
-              <input name="height" type="number" placeholder="Height"/>
-              <input name="length" type="number" placeholder="Length"/>
-          </div>
-          <p>Фото формату .glb</p>
-          <input type="file" name="model" accept=".glb" onChange={handleModel} required/>
-          <p>Фото на превʼю</p>
-          <input type="file" name="images" accept="image/*" multiple onChange={handleImages}/>
+                <input name="name" placeholder="Ім'я" required/>
+                <input name="object_name" placeholder="Назва об'єкта" required/>
 
-          {preview && <p className="preview-text">✔ GLB file selected</p>}
+                <div className="row">
+                    <input name="width" type="number" placeholder="Ширина"/>
+                    <input name="height" type="number" placeholder="Висота"/>
+                    <input name="length" type="number" placeholder="Довжина"/>
+                </div>
 
-          <div className="image-preview">
-              {imagesPreview.map((src, i) => (
-                  <img key={i} src={src}/>
-              ))}
-          </div>
+                {/* Кастомний випадаючий список */}
+                <div className="custom-select" onClick={() => setDropdownOpen(!dropdownOpen)}>
+                    <div className="selected">{selectedCategory || "Оберіть категорію"}</div>
+                    {dropdownOpen && (
+                        <div className="options">
+                            {categories.map((cat, i) => (
+                                <div
+                                    key={i}
+                                    onClick={() => { setSelectedCategory(cat); setDropdownOpen(false); }}
+                                    className="option"
+                                >
+                                    {cat}
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
 
-          <button>Send</button>
-      </form>
+                <p>Файл формату .glb</p>
+                <input type="file" name="model" accept=".glb" onChange={handleModel} required/>
+                <p>Фото для превʼю</p>
+                <input type="file" name="images" accept="image/*" multiple onChange={handleImages}/>
 
-  );
+                {preview && <p className="preview-text">✔ Файл GLB вибрано</p>}
+
+                <div className="image-preview">
+                    {imagesPreview.map((src, i) => (
+                        <img key={i} src={src} alt={`preview-${i}`} />
+                    ))}
+                </div>
+
+                <button>Відправити</button>
+            </form>
+
+            {}
+            {objects.length > 0 && (
+                <div className="objects-table">
+                    <h3>Завантажені об'єкти</h3>
+                    <table>
+                        <thead>
+                        <tr>
+                            <th>Ім'я</th>
+                            <th>Об'єкт</th>
+                            <th>Розміри (ШxВxД)</th>
+                            <th>Категорія</th>
+                            <th>Модель</th>
+                            <th>Фото</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {objects.map((obj, i) => (
+                            <tr key={i}>
+                                <td>{obj.name}</td>
+                                <td>{obj.object_name}</td>
+                                <td>{obj.width} x {obj.height} x {obj.length}</td>
+                                <td>{obj.category}</td>
+                                <td>{obj.modelPreview ? <span>✔</span> : ""}</td>
+                                <td>
+                                    {obj.imagesPreview.map((img, j) => (
+                                        <img key={j} src={img} alt={`img-${j}`} style={{width: "50px", marginRight: "5px"}} />
+                                    ))}
+                                </td>
+                            </tr>
+                        ))}
+                        </tbody>
+                    </table>
+                </div>
+            )}
+        </div>
+    );
 }

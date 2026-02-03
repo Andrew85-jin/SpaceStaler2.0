@@ -113,3 +113,53 @@ body {
   transform: translateY(-1px);
   box-shadow: 0 10px 25px rgba(79, 70, 229, 0.4);
 }
+/* Стилі для випадаючого списку з прокруткою */
+select {
+  width: 100%;
+  padding: 8px;
+  margin: 10px 0;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  /* Стиль прокрутки для довгого списку */
+  max-height: 120px; /* висота випадаючого списку */
+  overflow-y: auto;  /* вертикальна прокрутка */
+}
+.custom-select {
+  position: relative;
+  width: 100%;
+  margin-bottom: 14px;
+  cursor: pointer;
+  color: #fff;
+  font-size: 16px;
+}
+
+.custom-select .selected {
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid #262b36;
+  background: #0f131a;
+}
+
+.custom-select .options {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: #161a22;
+  border-radius: 10px;
+  border: 1px solid #262b36;
+  max-height: 150px;
+  overflow-y: auto; /* скрол */
+  z-index: 10;
+}
+
+.custom-select .option {
+  padding: 10px;
+}
+
+.custom-select .option:hover {
+  background: #4f46e5;
+}
+
+
