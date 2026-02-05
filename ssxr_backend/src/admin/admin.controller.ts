@@ -1,4 +1,4 @@
-import {Controller, Post, Body, UploadedFiles, UseInterceptors,} from '@nestjs/common';
+import {Controller, Post, Get, Body, UploadedFiles, UseInterceptors,} from '@nestjs/common';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
@@ -39,5 +39,10 @@ export class AdminController {
     ) {
         console.log('FILES IN CONTROLLER:', files);
         return this.adminService.create(body, files);
+    }
+
+    @Get()
+    async findAll() {
+        return this.adminService.findAll();
     }
 }

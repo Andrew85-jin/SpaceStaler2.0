@@ -12,6 +12,10 @@ export class AdminService {
         private readonly adminRepository: Repository<Admin>,
     ) {}
 
+    async findAll(): Promise<Admin[]> {
+        return await this.adminRepository.find();
+    }
+
     async create(
         body: AdminDto,
         files: {
@@ -21,8 +25,9 @@ export class AdminService {
     ): Promise<Admin> {
         const glbFile = files.model?.[0];
         const images = files.images || [];
+
         if (!glbFile) {
-            throw new Error('GLB файл обязателен');
+            throw new Error('GLB файл обов’язковий');
         }
 
         const admin = this.adminRepository.create({
@@ -31,9 +36,8 @@ export class AdminService {
             width: body.width ? Number(body.width) : null,
             height: body.height ? Number(body.height) : null,
             length: body.length ? Number(body.length) : null,
-            glb_path: glbFile.path,
-            images: images.map((img) => img.path),
-            category: body.category,
+            glb_path: glbFile.filename, // Змінено з .path на .filename
+            images: images.map((img) => img.filename), // Змінено з .path на .filename
         });
 
         return this.adminRepository.save(admin);
