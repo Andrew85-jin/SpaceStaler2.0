@@ -12,7 +12,6 @@ export class AdminService {
         private readonly adminRepository: Repository<Admin>,
     ) {}
 
-    // Метод для Unity: повертає всі об'єкти з бази
     async findAll(): Promise<Admin[]> {
         return await this.adminRepository.find();
     }
@@ -31,8 +30,6 @@ export class AdminService {
             throw new Error('GLB файл обов’язковий');
         }
 
-        // ВАЖЛИВО: Зберігаємо тільки ім'я файлу (filename), 
-        // а не повний шлях (path), щоб було зручніше формувати URL для Unity
         const admin = this.adminRepository.create({
             name: body.name,
             object_name: body.object_name,
