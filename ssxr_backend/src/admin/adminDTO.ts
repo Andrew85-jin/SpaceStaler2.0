@@ -20,4 +20,8 @@ export class AdminDto {
     @IsOptional()
     @IsNumberString()
     length?: string;
+
+    @IsString()
+    @IsNotEmpty()
+    category: string;
 }

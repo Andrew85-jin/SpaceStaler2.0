@@ -33,6 +33,7 @@ export class AdminService {
             length: body.length ? Number(body.length) : null,
             glb_path: glbFile.path,
             images: images.map((img) => img.path),
+            category: body.category,
         });
 
         return this.adminRepository.save(admin);

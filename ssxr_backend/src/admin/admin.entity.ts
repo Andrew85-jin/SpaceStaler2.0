@@ -25,4 +25,7 @@ export class Admin {
 
     @Column('json')
     images: string[];
+
+    @Column()
+    category : string;
 }

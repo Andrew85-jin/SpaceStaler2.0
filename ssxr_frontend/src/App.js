@@ -59,7 +59,7 @@ export default function UploadForm() {
             formData.append("images", img);
         }
 
-        const response = await fetch("https://friend-api.com/upload", {
+        const response = await fetch("http://localhost:3001/admin/upload", {
             method: "POST",
             body: formData,
         });
