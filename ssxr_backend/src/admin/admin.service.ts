@@ -36,8 +36,9 @@ export class AdminService {
             width: body.width ? Number(body.width) : null,
             height: body.height ? Number(body.height) : null,
             length: body.length ? Number(body.length) : null,
-            glb_path: glbFile.filename, // Змінено з .path на .filename
-            images: images.map((img) => img.filename), // Змінено з .path на .filename
+            glb_path: glbFile.filename,
+            images: images.map((img) => img.filename),
+            category: body.category,
         });
 
         return this.adminRepository.save(admin);

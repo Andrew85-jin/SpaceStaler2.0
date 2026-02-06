@@ -10,20 +10,26 @@ export default function UploadForm() {
     const [dropdownOpen, setDropdownOpen] = useState(false);
 
     useEffect(() => {
-        const fetchCategories = async () => {
-            const data = [
-                "Диван", "Стілець", "Мікрохвильовка", "Телевізор", "Крісло",
-                "Ліжко", "Тумбочка", "Холодильник", "Стіл", "Лампа", "Килим",
-                "Шафа", "Письмовий стіл", "Полиця", "Тумба"
-            ];
-            setCategories(data);
-        };
-        fetchCategories();
+        setCategories([
+            "Диван", "Стілець", "Мікрохвильовка", "Телевізор", "Крісло",
+            "Ліжко", "Тумбочка", "Холодильник", "Стіл", "Лампа", "Килим",
+            "Шафа", "Письмовий стіл", "Полиця", "Тумба"
+        ]);
+    }, []);
+
+    const fetchObjects = async () => {
+        const res = await fetch("http://localhost:3001/admin");
+        const data = await res.json();
+        setObjects(data);
+    };
+
+    useEffect(() => {
+        fetchObjects();
     }, []);
 
     const handleModel = (e) => {
         const file = e.target.files[0];
-        setPreview(URL.createObjectURL(file));
+        if (file) setPreview(URL.createObjectURL(file));
     };
 
     const handleImages = (e) => {
@@ -34,27 +40,20 @@ export default function UploadForm() {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        if (!selectedCategory) return alert("Оберіть категорію");
+        if (!selectedCategory) {
+            alert("Оберіть категорію");
+            return;
+        }
 
         const formData = new FormData();
-        const objectData = {
-            name: e.target.name.value,
-            object_name: e.target.object_name.value,
-            width: e.target.width.value,
-            height: e.target.height.value,
-            length: e.target.length.value,
-            category: selectedCategory,
-            modelPreview: preview,
-            imagesPreview: imagesPreview
-        };
-
-        formData.append("name", objectData.name);
-        formData.append("object_name", objectData.object_name);
-        formData.append("width", objectData.width);
-        formData.append("height", objectData.height);
-        formData.append("length", objectData.length);
-        formData.append("category", objectData.category);
+        formData.append("name", e.target.name.value);
+        formData.append("object_name", e.target.object_name.value);
+        formData.append("width", e.target.width.value);
+        formData.append("height", e.target.height.value);
+        formData.append("length", e.target.length.value);
+        formData.append("category", selectedCategory);
         formData.append("model", e.target.model.files[0]);
+
         for (let img of e.target.images.files) {
             formData.append("images", img);
         }
@@ -65,13 +64,12 @@ export default function UploadForm() {
         });
 
         if (response.ok) {
-            alert("Відправлено!");
-            setObjects(prev => [...prev, objectData]);
             e.target.reset();
             setPreview(null);
             setImagesPreview([]);
             setSelectedCategory("");
             setDropdownOpen(false);
+            await fetchObjects();
         } else {
             alert("Помилка при відправці");
         }
@@ -82,25 +80,32 @@ export default function UploadForm() {
             <form className="upload-form" onSubmit={handleSubmit}>
                 <h2>Завантажити 3D Об'єкт</h2>
 
-                <input name="name" placeholder="Ім'я" required/>
-                <input name="object_name" placeholder="Назва об'єкта" required/>
+                <input name="name" placeholder="Ім'я" required />
+                <input name="object_name" placeholder="Назва об'єкта" required />
 
                 <div className="row">
-                    <input name="width" type="number" placeholder="Ширина"/>
-                    <input name="height" type="number" placeholder="Висота"/>
-                    <input name="length" type="number" placeholder="Довжина"/>
+                    <input name="width" type="number" placeholder="Ширина" />
+                    <input name="height" type="number" placeholder="Висота" />
+                    <input name="length" type="number" placeholder="Довжина" />
                 </div>
 
-                {/* Кастомний випадаючий список */}
-                <div className="custom-select" onClick={() => setDropdownOpen(!dropdownOpen)}>
-                    <div className="selected">{selectedCategory || "Оберіть категорію"}</div>
+                <div className="custom-select">
+                    <div
+                        className="selected"
+                        onClick={() => setDropdownOpen(!dropdownOpen)}
+                    >
+                        {selectedCategory || "Оберіть категорію"}
+                    </div>
                     {dropdownOpen && (
                         <div className="options">
                             {categories.map((cat, i) => (
                                 <div
                                     key={i}
-                                    onClick={() => { setSelectedCategory(cat); setDropdownOpen(false); }}
                                     className="option"
+                                    onClick={() => {
+                                        setSelectedCategory(cat);
+                                        setDropdownOpen(false);
+                                    }}
                                 >
                                     {cat}
                                 </div>
@@ -110,11 +115,12 @@ export default function UploadForm() {
                 </div>
 
                 <p>Файл формату .glb</p>
-                <input type="file" name="model" accept=".glb" onChange={handleModel} required/>
-                <p>Фото для превʼю</p>
-                <input type="file" name="images" accept="image/*" multiple onChange={handleImages}/>
+                <input type="file" name="model" accept=".glb" onChange={handleModel} required />
 
-                {preview && <p className="preview-text">✔ Файл GLB вибрано</p>}
+                <p>Фото для превʼю</p>
+                <input type="file" name="images" accept="image/*" multiple onChange={handleImages} />
+
+                {preview && <p className="preview-text">✔ GLB вибрано</p>}
 
                 <div className="image-preview">
                     {imagesPreview.map((src, i) => (
@@ -125,7 +131,6 @@ export default function UploadForm() {
                 <button>Відправити</button>
             </form>
 
-            {}
             {objects.length > 0 && (
                 <div className="objects-table">
                     <h3>Завантажені об'єкти</h3>
@@ -134,23 +139,28 @@ export default function UploadForm() {
                         <tr>
                             <th>Ім'я</th>
                             <th>Об'єкт</th>
-                            <th>Розміри (ШxВxД)</th>
+                            <th>Розміри</th>
                             <th>Категорія</th>
                             <th>Модель</th>
                             <th>Фото</th>
                         </tr>
                         </thead>
                         <tbody>
-                        {objects.map((obj, i) => (
-                            <tr key={i}>
+                        {objects.map((obj) => (
+                            <tr key={obj.id}>
                                 <td>{obj.name}</td>
                                 <td>{obj.object_name}</td>
                                 <td>{obj.width} x {obj.height} x {obj.length}</td>
                                 <td>{obj.category}</td>
-                                <td>{obj.modelPreview ? <span>✔</span> : ""}</td>
+                                <td>✔</td>
                                 <td>
-                                    {obj.imagesPreview.map((img, j) => (
-                                        <img key={j} src={img} alt={`img-${j}`} style={{width: "50px", marginRight: "5px"}} />
+                                    {obj.images?.map((img, i) => (
+                                        <img
+                                            key={i}
+                                            src={`http://localhost:3001/${img}`}
+                                            alt=""
+                                            style={{ width: 50, marginRight: 5 }}
+                                        />
                                     ))}
                                 </td>
                             </tr>
