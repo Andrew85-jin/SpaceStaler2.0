@@ -6,26 +6,27 @@ export default function UploadForm() {
     const [imagesPreview, setImagesPreview] = useState([]);
     const [categories, setCategories] = useState([]);
     const [selectedCategory, setSelectedCategory] = useState("");
-    const [objects, setObjects] = useState([]);
     const [dropdownOpen, setDropdownOpen] = useState(false);
 
+    const [objects, setObjects] = useState(() => {
+        const saved = localStorage.getItem("objects");
+        return saved ? JSON.parse(saved) : [];
+    });
+
+    const [filterCategory, setFilterCategory] = useState("all");
+
     useEffect(() => {
-        setCategories([
+        const data = [
             "Диван", "Стілець", "Мікрохвильовка", "Телевізор", "Крісло",
             "Ліжко", "Тумбочка", "Холодильник", "Стіл", "Лампа", "Килим",
             "Шафа", "Письмовий стіл", "Полиця", "Тумба"
-        ]);
+        ];
+        setCategories(data);
     }, []);
-
-    const fetchObjects = async () => {
-        const res = await fetch("http://localhost:3001/admin");
-        const data = await res.json();
-        setObjects(data);
-    };
 
     useEffect(() => {
-        fetchObjects();
-    }, []);
+        localStorage.setItem("objects", JSON.stringify(objects));
+    }, [objects]);
 
     const handleModel = (e) => {
         const file = e.target.files[0];
@@ -40,40 +41,52 @@ export default function UploadForm() {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        if (!selectedCategory) {
-            alert("Оберіть категорію");
-            return;
-        }
+        if (!selectedCategory) return alert("Оберіть категорію");
+
+        const objectData = {
+            name: e.target.name.value,
+            object_name: e.target.object_name.value,
+            width: e.target.width.value,
+            height: e.target.height.value,
+            length: e.target.length.value,
+            category: selectedCategory,
+            modelPreview: preview,
+            imagesPreview
+        };
 
         const formData = new FormData();
-        formData.append("name", e.target.name.value);
-        formData.append("object_name", e.target.object_name.value);
-        formData.append("width", e.target.width.value);
-        formData.append("height", e.target.height.value);
-        formData.append("length", e.target.length.value);
-        formData.append("category", selectedCategory);
-        formData.append("model", e.target.model.files[0]);
+        Object.entries(objectData).forEach(([key, value]) => {
+            if (key !== "imagesPreview" && key !== "modelPreview") {
+                formData.append(key, value);
+            }
+        });
 
+        formData.append("model", e.target.model.files[0]);
         for (let img of e.target.images.files) {
             formData.append("images", img);
         }
 
-        const response = await fetch("http://localhost:3001/admin/upload", {
+        const response = await fetch("https://friend-api.com/upload", {
             method: "POST",
             body: formData,
         });
 
         if (response.ok) {
+            setObjects(prev => [...prev, objectData]);
             e.target.reset();
             setPreview(null);
             setImagesPreview([]);
             setSelectedCategory("");
             setDropdownOpen(false);
-            await fetchObjects();
         } else {
             alert("Помилка при відправці");
         }
     };
+
+    const filteredObjects =
+        filterCategory === "all"
+            ? objects
+            : objects.filter(obj => obj.category === filterCategory);
 
     return (
         <div>
@@ -89,13 +102,8 @@ export default function UploadForm() {
                     <input name="length" type="number" placeholder="Довжина" />
                 </div>
 
-                <div className="custom-select">
-                    <div
-                        className="selected"
-                        onClick={() => setDropdownOpen(!dropdownOpen)}
-                    >
-                        {selectedCategory || "Оберіть категорію"}
-                    </div>
+                <div className="custom-select" onClick={() => setDropdownOpen(!dropdownOpen)}>
+                    <div className="selected">{selectedCategory || "Оберіть категорію"}</div>
                     {dropdownOpen && (
                         <div className="options">
                             {categories.map((cat, i) => (
@@ -114,24 +122,37 @@ export default function UploadForm() {
                     )}
                 </div>
 
-                <p>Файл формату .glb</p>
+                <p>Файл .glb</p>
                 <input type="file" name="model" accept=".glb" onChange={handleModel} required />
 
-                <p>Фото для превʼю</p>
+                <p>Фото</p>
                 <input type="file" name="images" accept="image/*" multiple onChange={handleImages} />
 
                 {preview && <p className="preview-text">✔ GLB вибрано</p>}
 
                 <div className="image-preview">
                     {imagesPreview.map((src, i) => (
-                        <img key={i} src={src} alt={`preview-${i}`} />
+                        <img key={i} src={src} alt="" />
                     ))}
                 </div>
 
                 <button>Відправити</button>
             </form>
 
+            {/* 🔎 ФІЛЬТР */}
             {objects.length > 0 && (
+                <div className="filter">
+                    <select value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)}>
+                        <option value="all">Всі категорії</option>
+                        {categories.map((cat, i) => (
+                            <option key={i} value={cat}>{cat}</option>
+                        ))}
+                    </select>
+                </div>
+            )}
+
+            {/* 📋 ТАБЛИЦЯ */}
+            {filteredObjects.length > 0 && (
                 <div className="objects-table">
                     <h3>Завантажені об'єкти</h3>
                     <table>
@@ -141,26 +162,21 @@ export default function UploadForm() {
                             <th>Об'єкт</th>
                             <th>Розміри</th>
                             <th>Категорія</th>
-                            <th>Модель</th>
+                            <th>GLB</th>
                             <th>Фото</th>
                         </tr>
                         </thead>
                         <tbody>
-                        {objects.map((obj) => (
-                            <tr key={obj.id}>
+                        {filteredObjects.map((obj, i) => (
+                            <tr key={i}>
                                 <td>{obj.name}</td>
                                 <td>{obj.object_name}</td>
-                                <td>{obj.width} x {obj.height} x {obj.length}</td>
+                                <td>{obj.width}×{obj.height}×{obj.length}</td>
                                 <td>{obj.category}</td>
-                                <td>✔</td>
+                                <td>{obj.modelPreview && "✔"}</td>
                                 <td>
-                                    {obj.images?.map((img, i) => (
-                                        <img
-                                            key={i}
-                                            src={`http://localhost:3001/${img}`}
-                                            alt=""
-                                            style={{ width: 50, marginRight: 5 }}
-                                        />
+                                    {obj.imagesPreview.map((img, j) => (
+                                        <img key={j} src={img} style={{ width: 40, marginRight: 4 }} />
                                     ))}
                                 </td>
                             </tr>
