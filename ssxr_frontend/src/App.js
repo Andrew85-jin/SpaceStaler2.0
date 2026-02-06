@@ -6,24 +6,31 @@ export default function UploadForm() {
     const [imagesPreview, setImagesPreview] = useState([]);
     const [categories, setCategories] = useState([]);
     const [selectedCategory, setSelectedCategory] = useState("");
-    const [objects, setObjects] = useState([]);
     const [dropdownOpen, setDropdownOpen] = useState(false);
 
+    const [objects, setObjects] = useState(() => {
+        const saved = localStorage.getItem("objects");
+        return saved ? JSON.parse(saved) : [];
+    });
+
+    const [filterCategory, setFilterCategory] = useState("all");
+
     useEffect(() => {
-        const fetchCategories = async () => {
-            const data = [
-                "Диван", "Стілець", "Мікрохвильовка", "Телевізор", "Крісло",
-                "Ліжко", "Тумбочка", "Холодильник", "Стіл", "Лампа", "Килим",
-                "Шафа", "Письмовий стіл", "Полиця", "Тумба"
-            ];
-            setCategories(data);
-        };
-        fetchCategories();
+        const data = [
+            "Диван", "Стілець", "Мікрохвильовка", "Телевізор", "Крісло",
+            "Ліжко", "Тумбочка", "Холодильник", "Стіл", "Лампа", "Килим",
+            "Шафа", "Письмовий стіл", "Полиця", "Тумба"
+        ];
+        setCategories(data);
     }, []);
+
+    useEffect(() => {
+        localStorage.setItem("objects", JSON.stringify(objects));
+    }, [objects]);
 
     const handleModel = (e) => {
         const file = e.target.files[0];
-        setPreview(URL.createObjectURL(file));
+        if (file) setPreview(URL.createObjectURL(file));
     };
 
     const handleImages = (e) => {
@@ -36,7 +43,6 @@ export default function UploadForm() {
 
         if (!selectedCategory) return alert("Оберіть категорію");
 
-        const formData = new FormData();
         const objectData = {
             name: e.target.name.value,
             object_name: e.target.object_name.value,
@@ -45,15 +51,16 @@ export default function UploadForm() {
             length: e.target.length.value,
             category: selectedCategory,
             modelPreview: preview,
-            imagesPreview: imagesPreview
+            imagesPreview
         };
 
-        formData.append("name", objectData.name);
-        formData.append("object_name", objectData.object_name);
-        formData.append("width", objectData.width);
-        formData.append("height", objectData.height);
-        formData.append("length", objectData.length);
-        formData.append("category", objectData.category);
+        const formData = new FormData();
+        Object.entries(objectData).forEach(([key, value]) => {
+            if (key !== "imagesPreview" && key !== "modelPreview") {
+                formData.append(key, value);
+            }
+        });
+
         formData.append("model", e.target.model.files[0]);
         for (let img of e.target.images.files) {
             formData.append("images", img);
@@ -65,7 +72,6 @@ export default function UploadForm() {
         });
 
         if (response.ok) {
-            alert("Відправлено!");
             setObjects(prev => [...prev, objectData]);
             e.target.reset();
             setPreview(null);
@@ -77,21 +83,25 @@ export default function UploadForm() {
         }
     };
 
+    const filteredObjects =
+        filterCategory === "all"
+            ? objects
+            : objects.filter(obj => obj.category === filterCategory);
+
     return (
         <div>
             <form className="upload-form" onSubmit={handleSubmit}>
                 <h2>Завантажити 3D Об'єкт</h2>
 
-                <input name="name" placeholder="Ім'я" required/>
-                <input name="object_name" placeholder="Назва об'єкта" required/>
+                <input name="name" placeholder="Ім'я" required />
+                <input name="object_name" placeholder="Назва об'єкта" required />
 
                 <div className="row">
-                    <input name="width" type="number" placeholder="Ширина"/>
-                    <input name="height" type="number" placeholder="Висота"/>
-                    <input name="length" type="number" placeholder="Довжина"/>
+                    <input name="width" type="number" placeholder="Ширина" />
+                    <input name="height" type="number" placeholder="Висота" />
+                    <input name="length" type="number" placeholder="Довжина" />
                 </div>
 
-                {/* Кастомний випадаючий список */}
                 <div className="custom-select" onClick={() => setDropdownOpen(!dropdownOpen)}>
                     <div className="selected">{selectedCategory || "Оберіть категорію"}</div>
                     {dropdownOpen && (
@@ -99,8 +109,11 @@ export default function UploadForm() {
                             {categories.map((cat, i) => (
                                 <div
                                     key={i}
-                                    onClick={() => { setSelectedCategory(cat); setDropdownOpen(false); }}
                                     className="option"
+                                    onClick={() => {
+                                        setSelectedCategory(cat);
+                                        setDropdownOpen(false);
+                                    }}
                                 >
                                     {cat}
                                 </div>
@@ -109,24 +122,37 @@ export default function UploadForm() {
                     )}
                 </div>
 
-                <p>Файл формату .glb</p>
-                <input type="file" name="model" accept=".glb" onChange={handleModel} required/>
-                <p>Фото для превʼю</p>
-                <input type="file" name="images" accept="image/*" multiple onChange={handleImages}/>
+                <p>Файл .glb</p>
+                <input type="file" name="model" accept=".glb" onChange={handleModel} required />
 
-                {preview && <p className="preview-text">✔ Файл GLB вибрано</p>}
+                <p>Фото</p>
+                <input type="file" name="images" accept="image/*" multiple onChange={handleImages} />
+
+                {preview && <p className="preview-text">✔ GLB вибрано</p>}
 
                 <div className="image-preview">
                     {imagesPreview.map((src, i) => (
-                        <img key={i} src={src} alt={`preview-${i}`} />
+                        <img key={i} src={src} alt="" />
                     ))}
                 </div>
 
                 <button>Відправити</button>
             </form>
 
-            {}
+            {/* 🔎 ФІЛЬТР */}
             {objects.length > 0 && (
+                <div className="filter">
+                    <select value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)}>
+                        <option value="all">Всі категорії</option>
+                        {categories.map((cat, i) => (
+                            <option key={i} value={cat}>{cat}</option>
+                        ))}
+                    </select>
+                </div>
+            )}
+
+            {/* 📋 ТАБЛИЦЯ */}
+            {filteredObjects.length > 0 && (
                 <div className="objects-table">
                     <h3>Завантажені об'єкти</h3>
                     <table>
@@ -134,23 +160,23 @@ export default function UploadForm() {
                         <tr>
                             <th>Ім'я</th>
                             <th>Об'єкт</th>
-                            <th>Розміри (ШxВxД)</th>
+                            <th>Розміри</th>
                             <th>Категорія</th>
-                            <th>Модель</th>
+                            <th>GLB</th>
                             <th>Фото</th>
                         </tr>
                         </thead>
                         <tbody>
-                        {objects.map((obj, i) => (
+                        {filteredObjects.map((obj, i) => (
                             <tr key={i}>
                                 <td>{obj.name}</td>
                                 <td>{obj.object_name}</td>
-                                <td>{obj.width} x {obj.height} x {obj.length}</td>
+                                <td>{obj.width}×{obj.height}×{obj.length}</td>
                                 <td>{obj.category}</td>
-                                <td>{obj.modelPreview ? <span>✔</span> : ""}</td>
+                                <td>{obj.modelPreview && "✔"}</td>
                                 <td>
                                     {obj.imagesPreview.map((img, j) => (
-                                        <img key={j} src={img} alt={`img-${j}`} style={{width: "50px", marginRight: "5px"}} />
+                                        <img key={j} src={img} style={{ width: 40, marginRight: 4 }} />
                                     ))}
                                 </td>
                             </tr>
